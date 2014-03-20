@@ -710,8 +710,7 @@
 	};
 
 	var interpreter = function(root){
-		
-		
+
 		var rootEnv = Object.create(original_env);
 		rootEnv.values = {};
 		rootEnv.scope = root.scope;
@@ -892,7 +891,6 @@
 				   var test = function (a){a = a + 1;return a;}; \
 				   var rz = test(a) + b +3 * 5; \
 	";
-
 
 	console.log(parse(source));
 	console.log(interpreter(parse(source)));
