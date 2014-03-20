@@ -850,7 +850,6 @@
 		}else if(node.arity === 'literal'){
 			node._result = node.value;
 		}else if(node.arity === 'statement'){
-			//TODO while
 			if(node.value == 'return'){
 				if(node.first){
 					interpret(node.first,env);
@@ -867,8 +866,15 @@
 				}else{
 					node.third && interpret(node.third,env);
 				}
+			}else if(node.value == 'while'){
+				var condition = node.first;
+				interpret(condition,env);
+				while(condition._result){
+					node.second && interpret(node.second,env);
+					interpret(condition,env);
+				}
 			}else{
-				interpret(node,env);
+				node.error("unknown type");
 			}
 		}else if(node.arity === 'function'){
 			node._result = node;
@@ -884,7 +890,7 @@
 	}
 
 	var source = " var rz,a = -1,b = 1; \
-				   var test = function (a){ if(a < 0){ a = 0;}else{a = 1;} a = a + 1;return a;}; \
+				   var test = function (a){ while(a < 0){ a = a+1;} a = a + 1;return a;}; \
 				   rz = test(a) + b +3 * 5; \
 	";
 
