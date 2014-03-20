@@ -169,8 +169,8 @@
 		var symbol_table ={};
 
 		var original_symbol = {
-			nud: function(){
-				this.error("undefined.");	
+			nud: function(){	
+				this.error("undefined.");
 			},
 			led: function(left){
 				this.error("undefined.");
@@ -323,15 +323,6 @@
 			return left;
 		}
 
-		/**
-		symbol("+",50).led = function(left){
-			this.first = left;
-			this.second = expression(50);
-			this.arity = "binary";
-			return this;
-		}
-		*/
-
 		var infix = function(id, bp, led){
 			var s = symbol(id, bp);
 			s.led = led || function(left){
@@ -463,9 +454,9 @@
 			return n.std();
 		  }
 		  v = expression(0);
-		  if(!v.assignment && v.id !== "("){
-			v.error("bad expression");
-		  }
+		  //if(!v.assignment && v.id !== "("){
+			//v.error("bad expression");
+		  //}
 		  advance(";");
 		  return v;
 		};
@@ -725,7 +716,6 @@
 	}
 
 	var interpret = function(node,env){
-		
 		//node type
 		if(node.arity === 'binary'){
 			if(node.value === '='){
@@ -805,7 +795,6 @@
 						var funcName = node.first,vals = node.second;
 					
 						var func = env.find(funcName.value);
-						console.log(func);
 						var newEnv = Object.create(original_env);
 						newEnv.parent = env;
 						newEnv.values = {};
@@ -813,10 +802,9 @@
 						newEnv.scope.putEnv(newEnv);
 						
 						var params = func.first,stats = func.second;
-						//TODO param and vals'count equal
+						//param and vals'count equal
 						for(var i=0;i<params.length;i++){
 							var paramNode = params[i],valNode = vals[i];
-							console.log(valNode);
 							interpret(valNode,env);
 							newEnv.values[paramNode.value] = valNode._result;
 						}
@@ -862,7 +850,7 @@
 		}else if(node.arity === 'literal'){
 			node._result = node.value;
 		}else if(node.arity === 'statement'){
-			//TODO if,while
+			//TODO while
 			if(node.value == 'return'){
 				if(node.first){
 					interpret(node.first,env);
@@ -871,6 +859,8 @@
 					env._return = undefined;
 				}
 				
+			}else if(node.value == 'if'){
+				console.log(node);
 			}else{
 				interpret(node,env);
 			}
@@ -887,10 +877,11 @@
 		}
 	}
 
-	var source = " var a = -1,b = 1; \
-				   var test = function (a){a = a + 1;return a;}; \
-				   var rz = test(a) + b +3 * 5; \
+	var source = " var rz,a = -1,b = 1; \
+				   var test = function (a){ if(a < 0){ a = 0;}else{a = 1;} a = a + 1;return a;}; \
+				   rz = test(a) + b +3 * 5; \
 	";
+
 
 	console.log(parse(source));
 	console.log(interpreter(parse(source)));
