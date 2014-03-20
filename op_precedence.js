@@ -860,7 +860,13 @@
 				}
 				
 			}else if(node.value == 'if'){
-				console.log(node);
+				var condition = node.first;
+				interpret(condition,env);
+				if(condition._result){
+					node.second && interpret(node.second,env);
+				}else{
+					node.third && interpret(node.third,env);
+				}
 			}else{
 				interpret(node,env);
 			}
