@@ -377,16 +377,6 @@
 			return this;
 		});
 
-		infix("[", 80, function(left){
-			this.first = left;
-			left._parent = this;
-			var expr = expression(0);
-			this.second = expr;
-			expr._parent = this;
-			this.arity = "binary";
-			advance("]");
-			return this;
-		});
 		// infix operator of right associative 
 		var infixr = function(id, bp, led){
 			var s = symbol(id, bp);
@@ -750,7 +740,6 @@
 
 		var rootEnv = Object.create(original_env);
 		rootEnv.values = {};
-		rootEnv.loopIndex = [];
 		rootEnv.scope = root.scope;
 		rootEnv.scope.putEnv(rootEnv);
 		for(var i =0;i < root.length;i++){
@@ -834,10 +823,9 @@
 						node._result = (left._result < right._result);
 						break;
 					case ".":
-						//TODO
-						break;
-					case "[":
-						//TODO
+						interpret(left,env);
+						interpret(right,env);
+						node._result = left._result[right._result];
 						break;
 					case "(":
 						//function invoke
@@ -847,7 +835,6 @@
 						var newEnv = Object.create(original_env);
 						newEnv.parent = func._env;
 						newEnv.values = {};
-						loopIndex = [];
 						newEnv.scope = func.scope;
 						newEnv.scope.putEnv(newEnv);
 						
@@ -892,7 +879,13 @@
 				case 'typeof':
 					node._result = typeof left._result;
 					break;
-				//TODO '{'
+				case '{':
+					var result = {};
+					for(var i=0;i<left.length;i++){
+						result[left[i].key] = left[i]._result;
+					}
+					node._result = result;
+					break;
 				default:
 					node.error("unknown type");
 					break;
@@ -970,9 +963,9 @@
 		}
 	}
 
-	var source = " var rz,a = -2,b = 1; \
+	var source = " var rz,a = -2,b = {'k':a+1}; \
 				   var test = function (a){ while(a < 0){ a = a+1; if(a === 0){break;}} a = a + 1;return a;}; \
-				   rz = test(a) + b +3 * 5; \
+				   rz = test(a) + b.k +3 * 5; \
 	";
 
 
