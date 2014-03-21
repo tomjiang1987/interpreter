@@ -327,7 +327,10 @@
 			var s = symbol(id, bp);
 			s.led = led || function(left){
 				this.first = left;
-				this.second = expression(bp);
+				left._parent = this;
+				var expr = expression(bp);
+				this.second = expr;
+				expr._parent = this;
 				this.arity = "binary";
 				return this;
 			};
@@ -348,20 +351,27 @@
 
 		infix("?", 20, function(){
 			this.first = left;
-			this.second = expression(0);
+			left._parent = this;
+			var sec = expression(0);
+			this.second = sec;
+			sec._parent = this;
 			advance(":");
-			this.third = expression(0);
+			var thi = expression(0);
+			this.third = thi;
+			thi._parent = this;
 			this.arity = "ternary";
 			return this;
 		});
 		//The . operator is used to select a member of an object. The token on the right must be a name, but it will be used as a literal.
 		infix(".", 80, function(left){
 			this.first = left;
+			left._parent = this;
 			if(token.arity !== "name"){
 				token.error("expect a name");
 			}
 			token.arity = "literal";
 			this.second = token;
+			token._parent = this;
 			this.arity = "binary";
 			advance();
 			return this;
@@ -369,7 +379,10 @@
 
 		infix("[", 80, function(left){
 			this.first = left;
-			this.second = expression(0);
+			left._parent = this;
+			var expr = expression(0);
+			this.second = expr;
+			expr._parent = this;
 			this.arity = "binary";
 			advance("]");
 			return this;
@@ -379,7 +392,10 @@
 			var s = symbol(id, bp);
 			s.led = led || function(left){
 				this.first = left;
-				this.second = expression(bp - 1);
+				left._parent = this;
+				var expr = expression(bp - 1);
+				this.second = expr;
+				expr._parent = this;
 				this.arity = "binary";
 				return this;
 			};
@@ -393,7 +409,9 @@
 			var s = symbol(id);
 			s.nud = nud || function(){
 				scope.reserve(this);
-				this.first = expression(70);
+				var expr = expression(70);
+				this.first = expr;
+				expr._parent = this;
 				this.arity = "unary";
 				return this;
 			}
@@ -415,7 +433,10 @@
 				left.error("bad lvalue");
 			}
 			this.first = left;
-			this.second = expression(9);
+			left._parent = this;
+			var expr = expression(9);
+			this.second = expr;
+			expr._parent = this;
 			this.assignment = true;
 			this.arity = "binary";
 			return this;
@@ -467,7 +488,8 @@
 			if(token.id === "}" || token.id === "(end)") break;
 			s = statement();
 			if(s){
-			  a.push(s);	
+			  a.push(s);
+			  s._parent = a;	
 			}
 		  }
 		  a.scope = scope;
@@ -507,7 +529,10 @@
 					t = token;
 					advance('=');
 					t.first = n;
-					t.second = expression(0);
+					n._parent = t;
+					var expr = expression(0);
+					t.second = expr;
+					expr._parent = t;
 					t.arity = "binary";
 					a.push(t);
 				}
@@ -522,23 +547,32 @@
 
 		stmt("while", function(){
 			advance("(");
-			this.first = expression(0);
+			var expr = expression(0);
+			this.first = expr;
+			expr._parent = this;
 			advance(")");
-			this.second = block();
+			var bk = block();
+			this.second = bk;
+			bk && (bk._parent = this);
 			this.arity = "statement";
 			return this;
 		});
 
 		stmt("if", function(){
 			advance("(");
-			this.first = expression(0);
+			var expr = expression(0);
+			this.first = expr;
+			expr._parent = this;
 			advance(")");
-			this.second = block();
+			var bk = block();
+			this.second = block;
+			bk && (bk._parent = this);
 			if(token.id === "else"){
 				scope.reserve(token);
 				advance("else");
-				
-				this.third = token.id === "if" ? statement(): block();	
+				var third = token.id === "if" ? statement(): block()
+				this.third = third;
+				third._parent = this;	
 			}else{
 				this.third = null;
 			}
@@ -557,7 +591,9 @@
 
 		stmt("return", function(){
 			if(token.id !== ";"){
-				this.first = expression(0);
+				var expr = expression(0);
+				this.first = expr;
+				expr._parent = this;
 			}
 			advance(";");
 			if(token.id !== "}"){ token.error("unreachable statement");}
@@ -588,9 +624,12 @@
 				}
 			}
 			this.first = a;
+			a._parent = this;
 			advance(")");
 			advance("{");
-			this.second = statements();
+			var stats = statements()
+			this.second = stats;
+			stats._parent = this;
 			advance("}");
 			this.arity = "function";
 			scope.pop();
@@ -602,12 +641,17 @@
 			if(left.id === "." || left.id === "["){
 				this.arity = "ternary";
 				this.first = left.first;
+				left.first._parent = this;
 				this.second = left.second;
+				left.second._parent = this;
 				this.third = a;
+				a._parent = this;
 			}else{
 				this.arity = "binary";
 				this.first = left;
+				left._parent = this;
 				this.second = a;
+				a._parent = this;
 				if((left.arity !== "unary" || left.id !== "function")&&
 						left.arity !== "name" && left.id != "(" && left.id !== "&&" && left.id !== "||" && left.id !== "?" ){
 					left.error("expect a variable name");
@@ -643,6 +687,7 @@
 			}
 			advance("]");
 			this.first = a;
+			a._parent = this;
 			this.arity = "unary";
 			return this;
 		});
@@ -666,6 +711,7 @@
 			}
 			advance("}");
 			this.first = a;
+			a._parent = this;
 			this.arity = "unary";
 			return this;
 		});
@@ -704,6 +750,7 @@
 
 		var rootEnv = Object.create(original_env);
 		rootEnv.values = {};
+		rootEnv.loopIndex = [];
 		rootEnv.scope = root.scope;
 		rootEnv.scope.putEnv(rootEnv);
 		for(var i =0;i < root.length;i++){
@@ -716,6 +763,8 @@
 	}
 
 	var interpret = function(node,env){
+		if(env.hasOwnProperty('_return')) return;		
+
 		//node type
 		if(node.arity === 'binary'){
 			if(node.value === '='){
@@ -796,8 +845,9 @@
 					
 						var func = env.find(funcName.value);
 						var newEnv = Object.create(original_env);
-						newEnv.parent = env;
+						newEnv.parent = func._env;
 						newEnv.values = {};
+						loopIndex = [];
 						newEnv.scope = func.scope;
 						newEnv.scope.putEnv(newEnv);
 						
@@ -810,7 +860,7 @@
 						}
 						
 						for(var j=0;j<stats.length;j++){
-							if(newEnv.hasOwnProperty(_return)) break;
+							if(newEnv.hasOwnProperty('_return')) break;
 							interpret(stats[j],newEnv);
 						}
 						
@@ -850,7 +900,7 @@
 		}else if(node.arity === 'literal'){
 			node._result = node.value;
 		}else if(node.arity === 'statement'){
-			if(newEnv.hasOwnProperty(_return)) return;
+			if(env.hasOwnProperty('_return')) return;
 
 			if(node.value == 'return'){
 				if(node.first){
@@ -869,21 +919,23 @@
 					node.third && interpret(node.third,env);
 				}
 			}else if(node.value == 'while'){
+				
 				var condition = node.first;
 				interpret(condition,env);
 				while(condition._result){
-					if(newEnv.hasOwnProperty(_return)) break;
-
 					node.second && interpret(node.second,env);
+
+					if(env.hasOwnProperty('_return')) break;
 					interpret(condition,env);
 				}
 			}else if(node.value == 'break'){
-				//TODO				
+								
 				console.log(node);
 			}else{
 				node.error("unknown type");
 			}
 		}else if(node.arity === 'function'){
+			node._env = env;
 			node._result = node;
 		}else if(node.arity === 'this'){
 			//TODO
@@ -896,7 +948,7 @@
 		}
 	}
 
-	var source = " var rz,a = -1,b = 1; \
+	var source = " var rz,a = -2,b = 1; \
 				   var test = function (a){ while(a < 0){ a = a+1; break;} a = a + 1;return a;}; \
 				   rz = test(a) + b +3 * 5; \
 	";
