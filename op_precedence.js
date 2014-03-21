@@ -914,23 +914,44 @@
 				var condition = node.first;
 				interpret(condition,env);
 				if(condition._result){
-					node.second && interpret(node.second,env);
+					if(node.second){
+						var rs = interpret(node.second,env);
+						if(rs) return rs;
+					} 
 				}else{
-					node.third && interpret(node.third,env);
+					if(node.third){
+					var rs = interpret(node.third,env);
+					if(rs) return rs;
+					} 
 				}
 			}else if(node.value == 'while'){
 				
 				var condition = node.first;
 				interpret(condition,env);
 				while(condition._result){
-					node.second && interpret(node.second,env);
-
-					if(env.hasOwnProperty('_return')) break;
-					interpret(condition,env);
+					if(node.second){
+						var rs = interpret(node.second,env);
+						if(rs && rs == 'break') break; 
+						if(env.hasOwnProperty('_return')) break;
+						interpret(condition,env);
+					}
+					 
 				}
+				
 			}else if(node.value == 'break'){
-								
-				console.log(node);
+				
+				var upNode = node._parent;
+				while(upNode){
+					if(upNode.arity === 'statement' && (upNode.value == 'while') ){
+						break;
+					}
+					
+					upNode = upNode._parent;
+					if(!upNode || (upNode.arity == 'function')) node.error("break statement not in any loops");
+				}
+				
+				return 'break';
+				
 			}else{
 				node.error("unknown type");
 			}
@@ -941,7 +962,8 @@
 			//TODO
 		}else if(Array.isArray(node)){
 			for(var i =0;i < node.length;i++){
-				interpret(node[i],env);
+				var rs = interpret(node[i],env);
+				if(rs) return rs;
 			}
 		}else{
 			node.error("unknown type");
