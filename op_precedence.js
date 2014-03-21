@@ -565,7 +565,7 @@
 			expr._parent = this;
 			advance(")");
 			var bk = block();
-			this.second = block;
+			this.second = bk;
 			bk && (bk._parent = this);
 			if(token.id === "else"){
 				scope.reserve(token);
@@ -971,7 +971,7 @@
 	}
 
 	var source = " var rz,a = -2,b = 1; \
-				   var test = function (a){ while(a < 0){ a = a+1; break;} a = a + 1;return a;}; \
+				   var test = function (a){ while(a < 0){ a = a+1; if(a === 0){break;}} a = a + 1;return a;}; \
 				   rz = test(a) + b +3 * 5; \
 	";
 
