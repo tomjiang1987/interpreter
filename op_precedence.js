@@ -782,7 +782,7 @@
 					case "<":
 						interpret(left,env);
 						interpret(right,env);
-						node._result = (left._result > right._result);
+						node._result = (left._result < right._result);
 						break;
 					case ".":
 						//TODO
@@ -810,7 +810,7 @@
 						}
 						
 						for(var j=0;j<stats.length;j++){
-							if(newEnv._return) break;
+							if(newEnv.hasOwnProperty(_return)) break;
 							interpret(stats[j],newEnv);
 						}
 						
@@ -850,6 +850,8 @@
 		}else if(node.arity === 'literal'){
 			node._result = node.value;
 		}else if(node.arity === 'statement'){
+			if(newEnv.hasOwnProperty(_return)) return;
+
 			if(node.value == 'return'){
 				if(node.first){
 					interpret(node.first,env);
@@ -870,9 +872,14 @@
 				var condition = node.first;
 				interpret(condition,env);
 				while(condition._result){
+					if(newEnv.hasOwnProperty(_return)) break;
+
 					node.second && interpret(node.second,env);
 					interpret(condition,env);
 				}
+			}else if(node.value == 'break'){
+				//TODO				
+				console.log(node);
 			}else{
 				node.error("unknown type");
 			}
@@ -890,7 +897,7 @@
 	}
 
 	var source = " var rz,a = -1,b = 1; \
-				   var test = function (a){ while(a < 0){ a = a+1;} a = a + 1;return a;}; \
+				   var test = function (a){ while(a < 0){ a = a+1; break;} a = a + 1;return a;}; \
 				   rz = test(a) + b +3 * 5; \
 	";
 
